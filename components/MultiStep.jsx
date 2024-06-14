@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { db, auth } from "/firebase-config";
 import { collection, addDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
@@ -560,6 +562,7 @@ const Step4 = ({ formData, onBack, onSubmit }) => {
 export default function MultiStep() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({});
+  const router = useRouter();
 
   const handleNext = (data) => {
     setFormData((prev) => ({ ...prev, ...data }));
@@ -574,7 +577,18 @@ export default function MultiStep() {
     const finalData = { ...formData, ...data };
 
     try {
+
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        finalData.email,
+        finalData.password
+      );
+
+      const user = userCredential.user;
+      console.log("User Created successfully:", user);
+
       const docRef = await addDoc(collection(db, "hospitals"), {
+        hid: user.uid,
         hospitalName: finalData.hospitalName,
         email: finalData.email,
         hospitalLocation: finalData.hospitalLocation,
@@ -586,20 +600,16 @@ export default function MultiStep() {
       console.log("Document written with ID: ", docRef.id);
       alert("Hospital registered successfully!");
 
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        finalData.email,
-        finalData.password
-      );
-      const user = userCredential.user;
-      console.log("User Created successfully:", user);
+      const hospitalID = user.uid;
+      router.push(`/hospitals/${hospitalID}`);
+      console.log(hospitalID)
 
     } catch (e) {
       console.error("Error adding document: ", e);
       alert("Error registering hospital. Please try again.");
 
-      const errorCode = error.code;
-      const errorMessage = error.message;
+      const errorCode = e.code;
+      const errorMessage = e.message;
       console.error("Error Creating User:", errorCode, errorMessage);
 
     }
