@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { db, auth } from "/firebase-config";
 import { collection, addDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
@@ -560,6 +562,7 @@ const Step4 = ({ formData, onBack, onSubmit }) => {
 export default function MultiStep() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({});
+  const router = useRouter();
 
   const handleNext = (data) => {
     setFormData((prev) => ({ ...prev, ...data }));
@@ -591,8 +594,19 @@ export default function MultiStep() {
         finalData.email,
         finalData.password
       );
+
       const user = userCredential.user;
       console.log("User Created successfully:", user);
+
+      const userId = user.uid;
+
+      await db.collection('hospitals').doc(userId).set({
+        name: formData.name,
+        address: formData.address,
+        email: formData.email,
+      });
+
+      router.push(`/hospitals/${userId}/dashboard`);
 
     } catch (e) {
       console.error("Error adding document: ", e);
