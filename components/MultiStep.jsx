@@ -577,7 +577,18 @@ export default function MultiStep() {
     const finalData = { ...formData, ...data };
 
     try {
+
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        finalData.email,
+        finalData.password
+      );
+
+      const user = userCredential.user;
+      console.log("User Created successfully:", user);
+
       const docRef = await addDoc(collection(db, "hospitals"), {
+        hid: user.uid,
         hospitalName: finalData.hospitalName,
         email: finalData.email,
         hospitalLocation: finalData.hospitalLocation,
@@ -589,31 +600,16 @@ export default function MultiStep() {
       console.log("Document written with ID: ", docRef.id);
       alert("Hospital registered successfully!");
 
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        finalData.email,
-        finalData.password
-      );
-
-      const user = userCredential.user;
-      console.log("User Created successfully:", user);
-
-      const userId = user.uid;
-
-      await db.collection('hospitals').doc(userId).set({
-        name: formData.name,
-        address: formData.address,
-        email: formData.email,
-      });
-
-      router.push(`/hospitals/${userId}/dashboard`);
+      const hospitalID = user.uid;
+      router.push(`/hospitals/${hospitalID}`);
+      console.log(hospitalID)
 
     } catch (e) {
       console.error("Error adding document: ", e);
       alert("Error registering hospital. Please try again.");
 
-      const errorCode = error.code;
-      const errorMessage = error.message;
+      const errorCode = e.code;
+      const errorMessage = e.message;
       console.error("Error Creating User:", errorCode, errorMessage);
 
     }
