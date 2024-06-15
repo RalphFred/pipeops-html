@@ -1,6 +1,4 @@
-// components/LoginForm.js
-"use client";
-
+"use client"
 import { useRouter } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -9,6 +7,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "/firebase-config";
 import { useState } from "react";
 import Image from "next/image";
+import Cookies from "js-cookie";
 
 const loginSchema = yup.object({
   email: yup.string().required("Email is required").email("Invalid email"),
@@ -27,7 +26,8 @@ const LoginForm = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       const user = userCredential.user;
-      console.log("User logged in successfully:", user);
+      const token = await user.getIdToken();
+      Cookies.set('token', token, { expires: 1 }); // set token in cookies for 1 day
       router.push(`/hospitals/${user.uid}`);
     } catch (e) {
       console.error("Error logging in:", e);
